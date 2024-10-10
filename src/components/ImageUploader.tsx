@@ -22,7 +22,7 @@ declare module "next-auth" {
 
 const ImageUploader = () => {
     const { data: session } = useSession();
-    const [file, setFile] = useState<File | null>(null);
+    const [files, setFiles] = useState<File[]>([]);
     const [uploading, setUploading] = useState(false);
     const [parentFolder, setParentFolder] = useState<string | null>(null);
     const [childFolder, setChildFolder] = useState<string>("");
@@ -33,17 +33,19 @@ const ImageUploader = () => {
     }
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const selectedFile = event.target.files?.[0] || null;
-        setFile(selectedFile);
+        const selectedFiles = Array.from(event.target.files || []);
+        setFiles(selectedFiles);
     };
 
     const handleUpload = async () => {
-        if (!file || !parentFolder) return;
+        if (files.length === 0 || !parentFolder) return;
 
         setUploading(true);
 
         const formData = new FormData();
-        formData.append('file', file);
+        files.forEach((file:File) => {
+            formData.append('file', file);
+        });
         formData.append('folder', parentFolder);
         formData.append('folder', childFolder);
 
@@ -69,7 +71,7 @@ const ImageUploader = () => {
 
     return (
         <div>
-            <input type="file" onChange={handleFileChange} />
+            <input type="file" multiple onChange={handleFileChange} />
             <Select onValueChange={(value) => setParentFolder(value)}>
                 <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Select Parent Folder" />
@@ -93,7 +95,7 @@ const ImageUploader = () => {
                     </SelectGroup>
                 </SelectContent>
             </Select>
-            <button onClick={handleUpload} disabled={!file || !parentFolder || uploading}>
+            <button onClick={handleUpload} disabled={files.length === 0 || !parentFolder || uploading}>
                 {uploading ? 'Uploading...' : 'Upload'}
             </button>
         </div>

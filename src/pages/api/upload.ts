@@ -11,6 +11,11 @@ export const config = {
     },
 };
 
+// Define the Octokit error type
+interface HttpError extends Error {
+    status: number;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === 'POST') {
         const session = await getSession({ req }); // Get the session info
@@ -18,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const allowedUsers = process.env.ALLOWED_GITHUB_USERS?.split(',') || []; // Get allowed users from environment variable
 
         if (!session || !session.user?.name || !allowedUsers.includes(session.user.name)) {
-            return res.status(403).json({message: "You are not an authenticated user"});
+            return res.status(403).json({ message: "You are not an authenticated user" });
         }
 
         form.parse(req, async (err, fields, files) => {
@@ -27,9 +32,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 return res.status(500).json({ message: 'Error parsing the files' });
             }
 
-            // Check if files.file is defined
+            // Check if files.file is defined and is an array
             if (!files.file || !Array.isArray(files.file)) {
-                return res.status(400).json({ message: 'No file uploaded' });
+                return res.status(400).json({ message: 'No files uploaded' });
             }
 
             // Check if fields.folder is defined
@@ -37,54 +42,66 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 return res.status(400).json({ message: 'No fields detected' });
             }
 
-            const file = files.file[0];
-            const buffer = fs.readFileSync(file.filepath);
-            
-            // const filePath = `uploads/${file.originalFilename}`
-            if(!file.originalFilename) return res.status(400).json({ message: 'No filename detected' })
-
-            const filePathBack = path.join(fields.folder[0], fields.folder[1], file.originalFilename);
-            const filePath = filePathBack.replace(/\\/g, '/');
-
             const octokit = new Octokit({
                 auth: process.env.GITHUB_ACCESS_TOKEN, // Use your personal GitHub access token from .env
             });
 
-            // Check if the file already exists in the repository
-            try {
-                const response = await octokit.repos.getContent({
-                    owner: 'prince-1908',
-                    repo: 'images-test',
-                    path: filePath,
-                });
+            const uploadResults = [];
 
-                console.log(response);
-                if (response.status === 200) {
+            // Loop through each file and handle the upload
+            for (const file of files.file) {
+                const buffer = fs.readFileSync(file.filepath);
+                if (!file.originalFilename) return res.status(400).json({ message: 'No filename detected' });
+
+                const filePathBack = path.join(fields.folder[0], fields.folder[1], file.originalFilename);
+                const filePath = filePathBack.replace(/\\/g, '/');
+
+                // Check if the file already exists in the repository
+                try {
+                    await octokit.repos.getContent({
+                        owner: 'prince-1908',
+                        repo: 'images-test',
+                        path: filePath,
+                    });
+
                     // If the response is successful, it means the file already exists
-                    return res.status(409).json({ message: `Image with name ${file.originalFilename} already exists in the repo.` });
+                    uploadResults.push({ filename: file.originalFilename, message: `Image with name ${file.originalFilename} already exists in the repo.` });
+                    continue; // Skip to the next file
+                } catch (error) {
+                    if ((error as HttpError).status === 404) {
+                        // The file does not exist, continue to upload
+                    } else if (error instanceof Error) {
+                        console.error('Error checking file existence:', error.message);
+                        return res.status(500).json({ message: 'Error checking file existence' });
+                    } else {
+                        console.log('Unknown error:', error);
+                        return res.status(500).json({ message: 'Unknown error occurred while checking file existence' });
+                    }
                 }
-            } catch (error: unknown) {
-                if (error instanceof Error) {
-                    console.log('Error checking file existence:', error.message);
-                } else {
-                    console.log('Unknown error:', error);
+
+                // Try to upload the file
+                try {
+                    await octokit.repos.createOrUpdateFileContents({
+                        owner: 'prince-1908',
+                        repo: 'images-test',
+                        path: filePath,
+                        message: 'Upload file',
+                        content: buffer.toString('base64'), // Upload the file in base64 format
+                    });
+                    uploadResults.push({ filename: file.originalFilename, message: 'File uploaded successfully' });
+                } catch (error) {
+                    if (error instanceof Error) {
+                        console.error('Error uploading file:', error);
+                        uploadResults.push({ filename: file.originalFilename, message: 'Error uploading file', error: error.message });
+                    } else {
+                        console.error('Unknown error during upload:', error);
+                        uploadResults.push({ filename: file.originalFilename, message: 'Unknown error during upload' });
+                    }
                 }
             }
 
-            try {
-                const response = await octokit.repos.createOrUpdateFileContents({
-                    owner: 'prince-1908',
-                    repo: 'images-test',
-                    path: filePath,
-                    message: 'Upload file',
-                    content: buffer.toString('base64'), // Upload the file in base64 format
-                });
-
-                res.status(200).json(response.data);
-            } catch (error) {
-                console.error('Error uploading file:', error);
-                res.status(500).json({ message: 'Error uploading file', error: error });
-            }
+            // Send a response with the results of all uploads
+            res.status(200).json({ uploads: uploadResults });
         });
     } else {
         res.setHeader('Allow', ['POST']);
