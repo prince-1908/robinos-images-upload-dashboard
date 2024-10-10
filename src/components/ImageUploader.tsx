@@ -59,7 +59,9 @@ const ImageUploader = () => {
 
             if (response.ok) {
                 alert('File uploaded successfully to GitHub!');
+                console.log(result);
             } else {
+                console.log(result);
                 alert('Error uploading file: ' + result.message);
             }
         } catch (error) {

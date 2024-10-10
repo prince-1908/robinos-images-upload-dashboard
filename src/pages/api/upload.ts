@@ -4,6 +4,7 @@ import { Octokit } from '@octokit/rest';
 import fs from 'fs';
 import { getSession } from 'next-auth/react';
 import path from 'path';
+import supabase from '../../database/supabaseClient';
 
 export const config = {
     api: {
@@ -47,6 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             });
 
             const uploadResults = [];
+            const uploadUrls = [];
 
             // Loop through each file and handle the upload
             for (const file of files.file) {
@@ -88,7 +90,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         message: 'Upload file',
                         content: buffer.toString('base64'), // Upload the file in base64 format
                     });
+
+                    // Construct Image URL
+                    const url = `https://raw.githubusercontent.com/prince-1908/images-test/main/${filePath}`;
+                    const imageUrl = url.replaceAll(" ", "%20");
+
+                    // Save image URL to Supabase
+                    const { error: supabaseError } = await supabase
+                        .from('robinos-images')
+                        .insert([{ url: imageUrl, filename: file.originalFilename }]);
+
+                    if (supabaseError) {
+                        console.error('Error inserting image URL into Supabase:', supabaseError);
+                        return res.status(500).json({ message: 'Error saving URL to database' });
+                    }
+
                     uploadResults.push({ filename: file.originalFilename, message: 'File uploaded successfully' });
+                    uploadUrls.push(imageUrl);
                 } catch (error) {
                     if (error instanceof Error) {
                         console.error('Error uploading file:', error);
@@ -101,7 +119,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             }
 
             // Send a response with the results of all uploads
-            res.status(200).json({ uploads: uploadResults });
+            res.status(200).json({ uploads: uploadResults, urls: uploadUrls });
         });
     } else {
         res.setHeader('Allow', ['POST']);
