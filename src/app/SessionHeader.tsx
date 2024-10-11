@@ -26,10 +26,13 @@ const SessionHeader = () => {
         </button>
       ) : (
         <>
-          <p className="text-sm md:text-base">Welcome, {session.user?.name}</p>
-          <button onClick={() => signOut()} className="text-sm md:text-base">
+        <div className="relative">
+          <p className="text-[26px]  font-serif  absolute">Welcome, <span className="text-gray-600 font-semibold">{session.user?.name}</span></p>
+          <button onClick={() => signOut()} className="text-sm absolute  md:text-base border mt-1 border-black rounded-lg px-4 py-1  right-0 signup-btn md:px-6 md:py-3">
             Sign out
           </button>
+        </div>
+          
         </>
       )}
     </header>

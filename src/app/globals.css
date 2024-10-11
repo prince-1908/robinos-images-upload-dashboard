@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+
 body {
   font-family: Arial, Helvetica, sans-serif;
 }
@@ -146,4 +147,74 @@ background-image: linear-gradient(62deg, #8EC5FC 0%, #E0C3FC 100%);
 
 }
 
+/* upload-btn-imageuploader-component  */
 
+
+
+.upload-btn{
+  all: unset;
+  width: 100px;
+  height: 30px;
+  font-size: 16px;
+  background: transparent;
+  border: none;
+  position: relative;
+  color: black;
+  font-weight:600;
+  cursor: pointer;
+  z-index: 1;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.upload-btn::after,
+.upload-btn::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  z-index: -99999;
+  transition: all .4s;
+}
+
+.upload-btn::before {
+  transform: translate(0%, 0%);
+  width: 100%;
+  height: 100%;
+  background: #D8C3FC;
+  border-radius: 10px;
+}
+
+.upload-btn::after {
+  transform: translate(10px, 10px);
+  width: 35px;
+  height: 35px;
+  background: #1b05e015;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border-radius: 50px;
+}
+
+.upload-btn:hover::before {
+  transform: translate(5%, 20%);
+  width: 110%;
+  height: 110%;
+}
+
+.upload-btn:hover::after {
+  border-radius: 10px;
+  transform: translate(0, 0);
+  width: 100%;
+  height: 100%;
+}
+
+.upload-btn:active::after {
+  transition: 0s;
+  transform: translate(0, 5%);
+}
