@@ -96,13 +96,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     const imageUrl = url.replaceAll(" ", "%20");
 
                     // Save image URL to Supabase
-                    const { error: supabaseError } = await supabase
-                        .from('robinos-images')
-                        .insert([{ url: imageUrl, filename: file.originalFilename }]);
+                    try {
+                        const { error: supabaseError } = await supabase
+                            .from('robinos-images')
+                            .insert([{ url: imageUrl, filename: file.originalFilename, parent_folder: fields.folder[0], child_folder: fields.folder[1] }]);
 
-                    if (supabaseError) {
-                        console.error('Error inserting image URL into Supabase:', supabaseError);
-                        return res.status(500).json({ message: 'Error saving URL to database' });
+                        if (supabaseError) {
+                            console.error('Supabase Error:', supabaseError);
+                            return res.status(500).json({ message: 'Error saving URL to database', supabaseError });
+                        }
+
+                        res.status(200).json({ message: 'File uploaded successfully', imageUrl });
+                    } catch (error) {
+                        console.error('Error inserting into Supabase:', error);
+                        return res.status(500).json({ message: 'Error inserting into Supabase', error });
                     }
 
                     uploadResults.push({ filename: file.originalFilename, message: 'File uploaded successfully' });
