@@ -21,11 +21,15 @@ export default NextAuth({
     async jwt({ token, account }) {
       // Ensure account is defined before accessing its properties
       if (account) {
+        console.log("Account data in JWT callback (Vercel):", account);
         token.accessToken = account.access_token as string; // Use type assertion here
       }
+      console.log("JWT token (Vercel):", token);
       return token;
     },
     async session({ session, token }) {
+      console.log("Session callback (Vercel) - token:", token);
+      console.log("Session callback (Vercel) - session:", session);
       session.accessToken = (token as ExtendedToken).accessToken; // Type assertion for token
       return session;
     },
