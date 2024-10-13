@@ -23,6 +23,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const form = new IncomingForm(); // Create a new IncomingForm instance
         const allowedUsers = process.env.ALLOWED_GITHUB_USERS?.split(',') || []; // Get allowed users from environment variable
 
+        console.log("Allowed Users: ", allowedUsers);
+        console.log("Session: ", session);
+        console.log("Session.user: ", session?.user);
+        console.log("Session.user.name: ", session?.user?.name)
+
         if (!session || !session.user?.name || !allowedUsers.includes(session.user.name)) {
             return res.status(403).json({ message: "You are not an authenticated user" });
         }
