@@ -16,7 +16,7 @@ const SessionHeader = () => {
   }
 
   return (
-    <header className="w-full max-w-[1250px] relative">
+    <header className="w-full max-w-[1250px] relative ">
       {!session || session === null ? (
         <button
           onClick={() => signIn("github")}
@@ -27,8 +27,8 @@ const SessionHeader = () => {
       ) : (
         <>
         <div className="relative">
-          <p className="text-[26px]  font-serif  absolute">Welcome, <span className="text-gray-600 font-semibold">{session.user?.name}</span></p>
-          <button onClick={() => signOut()} className="text-sm absolute  md:text-base border mt-1 border-black rounded-lg px-4 py-1  right-0 signup-btn md:px-6 md:py-3">
+          <p className="md:text-[26px] text-[20px] font-serif  absolute">Welcome, <span className="text-gray-600 font-semibold">{session.user?.name}</span></p>
+          <button onClick={() => signOut()} className="text-sm  absolute  md:text-base border mt-1 border-black rounded-lg px-2 py-1  right-0 signup-btn md:px-6 md:py-3">
             Sign out
           </button>
         </div>

@@ -1,7 +1,7 @@
-'use client'
+'use client';
 import { useSession } from 'next-auth/react';
 import { useState } from 'react';
-import '../app/globals.css'
+import '../app/globals.css';
 import {
     Select,
     SelectContent,
@@ -9,7 +9,7 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 
 declare module "next-auth" {
     interface Session {
@@ -30,7 +30,7 @@ const ImageUploader = () => {
 
     if (!session) {
         console.error('User is not authenticated or accessToken is missing');
-        return;
+        return null;  // Return null instead of nothing for better practice
     }
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,7 +44,7 @@ const ImageUploader = () => {
         setUploading(true);
 
         const formData = new FormData();
-        files.forEach((file:File) => {
+        files.forEach((file: File) => {
             formData.append('file', file);
         });
         formData.append('folder', parentFolder);
@@ -73,45 +73,64 @@ const ImageUploader = () => {
     };
 
     return (
-        <div className='flex mx-auto gap-[50px] flex-col justify-center items-center'>
-            <input type="file" multiple onChange={handleFileChange}
-              className="pt-6 text-sm text-grey-500
-            file:mr-5 file:py-3 file:px-8
-            file:rounded-full file:border-0
-            file:text-md file:font-semibold  file:text-white
-            file:bg-gradient-to-r file:from-blue-400 file:to-blue-700
-            hover:file:cursor-pointer hover:file:opacity-80"
+        <div className='flex flex-col items-center    max-w-lg mx-auto'>
+            <input
+                type="file"
+                multiple
+                onChange={handleFileChange}
+                className="pt-4 text-sm text-grey-500
+                file:mr-5 file:py-3 file:px-8
+                file:rounded-full file:border-0
+                file:text-md file:font-semibold file:text-white
+                file:bg-gradient-to-r file:from-blue-400 file:to-blue-700
+                hover:file:cursor-pointer hover:file:opacity-80"
             />
-            {/* div of two drop down menu  */}
-            <div className='flex gap-x-4'>
-            <Select onValueChange={(value) => setParentFolder(value)}>
-                <SelectTrigger className="w-[180px] text-white font-serif bg-slate-700 border border-gray-300 rounded-lg shadow-sm transition duration-200 ease-in-out hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500">
-                    <SelectValue placeholder="Select Parent Folder" />
-                </SelectTrigger>
-                <SelectContent className=" mt-1 w-[180px] bg-white border border-gray-300 rounded-lg shadow-lg transition duration-200 ease-in-out  scale-95 transform origin-top">
-                    <SelectGroup>
-                        <SelectItem className='cursor-pointer hover:bg-red-400 transition duration-200' value="differentUploads">Different Uploads</SelectItem>
-                        <SelectItem className='cursor-pointer hover:bg-red-400 transition duration-200' value="myUploads">My Uploads</SelectItem>
-                        <SelectItem className='cursor-pointer hover:bg-red-400 transition duration-200' value="newUploads">New Uploads</SelectItem>
-                        <SelectItem className='cursor-pointer hover:bg-red-400 transition duration-200' value="uploads">Uploads</SelectItem>
-                    </SelectGroup>
-                </SelectContent>
-            </Select>
-            <Select onValueChange={(value) => setChildFolder(value)}>
-                <SelectTrigger className="w-[180px] bg-slate-100 font-serif rounded-lg shadow-sm transition duration-200 ease-in-out hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                    <SelectValue placeholder="Select Child Folder" />
-                </SelectTrigger>
-                <SelectContent className=" mt-1 w-[180px] bg-white border border-gray-300 rounded-lg shadow-lg transition duration-200 ease-in-out  scale-95 transform origin-top">
-                    <SelectGroup>
-                        <SelectItem value="innerUploads">Inner Uploads</SelectItem>
-                    </SelectGroup>
-                </SelectContent>
-            </Select>
+
+            {/* Display selected images */}
+            <div className="flex flex-wrap gap-4 mt-4">
+                {files.map((file, index) => (
+                    <div key={index} className="relative">
+                        <img
+                            src={URL.createObjectURL(file)}
+                            alt={file.name}
+                            className="h-[150px] w-[200px] object-cover rounded-md border"
+                        />
+                        <div className="text-center text-sm">{file.name}</div>
+                    </div>
+                ))}
             </div>
 
+            {/* div of two drop down menu */}
+            <div className='flex flex-col sm:flex-row gap-x-4 mt-4'>
+                <Select onValueChange={(value) => setParentFolder(value)}>
+                    <SelectTrigger className="w-full sm:w-[180px] text-white font-serif bg-slate-700 border border-gray-300 rounded-lg shadow-sm transition duration-200 ease-in-out hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                        <SelectValue placeholder="Select Parent Folder" />
+                    </SelectTrigger>
+                    <SelectContent className=" mt-1 w-full sm:w-[180px] bg-white border border-gray-300 rounded-lg shadow-lg transition duration-200 ease-in-out  scale-95 transform origin-top">
+                        <SelectGroup>
+                            <SelectItem className='cursor-pointer hover:bg-red-400 transition duration-200' value="differentUploads">Different Uploads</SelectItem>
+                            <SelectItem className='cursor-pointer hover:bg-red-400 transition duration-200' value="myUploads">My Uploads</SelectItem>
+                            <SelectItem className='cursor-pointer hover:bg-red-400 transition duration-200' value="newUploads">New Uploads</SelectItem>
+                            <SelectItem className='cursor-pointer hover:bg-red-400 transition duration-200' value="uploads">Uploads</SelectItem>
+                        </SelectGroup>
+                    </SelectContent>
+                </Select>
+                <Select onValueChange={(value) => setChildFolder(value)}>
+                    <SelectTrigger className="w-full sm:w-[180px] bg-slate-100 font-serif rounded-lg shadow-sm transition duration-200 ease-in-out hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        <SelectValue placeholder="Select Child Folder" />
+                    </SelectTrigger>
+                    <SelectContent className=" mt-1 w-full sm:w-[180px] bg-white border border-gray-300 rounded-lg shadow-lg transition duration-200 ease-in-out  scale-95 transform origin-top">
+                        <SelectGroup>
+                            <SelectItem value="innerUploads">Inner Uploads</SelectItem>
+                        </SelectGroup>
+                    </SelectContent>
+                </Select>
+            </div>
+
+            {/* upload btn  */}
             <button onClick={handleUpload} disabled={files.length === 0 || !parentFolder || uploading}
-             className='upload-btn'
-            >
+                className=' upload-btn '
+            > 
                 {uploading ? 'Uploading...' : 'Upload'}
             </button>
         </div>
