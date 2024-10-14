@@ -1,6 +1,6 @@
 "use client";
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "../app/globals.css";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -20,6 +20,8 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import Image from "next/image";
+import { useRef } from "react";
 
 declare module "next-auth" {
   interface Session {
@@ -36,7 +38,14 @@ const ImageUploader = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [parentFolder, setParentFolder] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [childFolder, setChildFolder] = useState<string>("");
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+
+  useEffect(() => {
+    const previews = files.map((file) => URL.createObjectURL(file));
+    setImagePreviews(previews);
+  }, [files]);
 
   if (!session) {
     console.error("User is not authenticated or accessToken is missing");
@@ -49,7 +58,21 @@ const ImageUploader = () => {
   };
 
   const handleUpload = async () => {
-    if (files.length === 0 || !parentFolder) return;
+    if (files.length === 0 || !parentFolder) {
+      alert("Please select file and parent folder");
+      return
+    };
+
+    if (!files.every(file => file.name.split('.')[1] === "png")) {
+      alert("Please select png files only.");
+      setFiles([]);
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
+      return;
+    }
 
     setUploading(true);
 
@@ -83,33 +106,39 @@ const ImageUploader = () => {
   };
 
   return (
-    <div className="flex flex-col items-center    max-w-lg mx-auto">
+    <div className="flex flex-col items-center gap-4 justify-evenly max-w-lg mx-auto">
       {/* choose file  input field  */}
       <input
+        ref={fileInputRef}
         type="file"
         multiple
+        accept=".png"
         onChange={handleFileChange}
         className="pt-4 text-sm text-grey-500
                 file:mr-5 file:py-3 file:px-8
                 file:rounded-full file:border-0
-                file:text-md file:font-semibold file:text-white
+                file:text-sm file:font-semibold file:text-white
                 file:bg-gradient-to-r file:from-blue-400 file:to-blue-700
                 hover:file:cursor-pointer hover:file:opacity-80"
       />
 
-        {/* carousel compoenets  */}
-
-     <Carousel className="w-full max-w-sm mt-5">
+      {/* carousel compoenets  */}
+      {imagePreviews.length > 0 && <Carousel className="w-full max-w-sm mt-5">
         <CarouselContent className="-ml-1">
-          {Array.from({ length: 5 }).map((_, index) => (
+          {imagePreviews.map((preview, index) => (
             <CarouselItem
               key={index}
               className="pl-1 md:basis-1/2 lg:basis-1/3"
             >
               <div className="p-1">
                 <Card>
-                  <CardContent className="flex aspect-square items-center justify-center p-6">
-                    <span className="text-2xl font-semibold">{index + 1}</span>
+                  <CardContent className="flex relative w-full h-full aspect-square items-center justify-center p-6">
+                    <Image
+                      src={preview}
+                      alt={`Selected image ${index + 1}`}
+                      fill
+                      className="rounded-lg object-cover"
+                    />
                   </CardContent>
                 </Card>
               </div>
@@ -118,24 +147,10 @@ const ImageUploader = () => {
         </CarouselContent>
         <CarouselPrevious />
         <CarouselNext />
-      </Carousel>
-
-      {/* Display selected images */}
-      <div className="flex flex-wrap gap-4 mt-4">
-        {files.map((file, index) => (
-          <div key={index} className="relative">
-            <img
-              src={URL.createObjectURL(file)}
-              alt={file.name}
-              className="h-[150px] w-[200px] object-cover rounded-md border"
-            />
-            <div className="text-center text-sm">{file.name}</div>
-          </div>
-        ))}
-      </div>
+      </Carousel>}
 
       {/* div of two drop down menu */}
-      <div className="flex flex-col sm:flex-row gap-x-4 mt-4">
+      <div className="flex flex-col sm:flex-row gap-y-4 gap-x-4 mt-4">
         <Select onValueChange={(value) => setParentFolder(value)}>
           <SelectTrigger className="w-full sm:w-[180px] text-white font-serif bg-slate-700 border border-gray-300 rounded-lg shadow-sm transition duration-200 ease-in-out hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500">
             <SelectValue placeholder="Select Parent Folder" />
@@ -185,12 +200,12 @@ const ImageUploader = () => {
       <button
         onClick={handleUpload}
         disabled={files.length === 0 || !parentFolder || uploading}
-        className=" upload-btn "
+        className=" upload-btn"
       >
         {uploading ? "Uploading..." : "Upload"}
       </button>
 
-    
+
     </div>
   );
 };

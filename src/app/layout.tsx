@@ -9,7 +9,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <SessionProvider>
       <html>
         <body>
-          <div>
+          <div className=''>
             <SessionHeader />
             <main>{children}</main>
           </div>
